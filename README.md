@@ -31,6 +31,8 @@ chmod +x airbyte-setup.sh scripts/airbyte-management.sh
 - Usa el correo que quieras registrar en el primer acceso
 - La contraseña es la que te muestra el comando de credenciales
 
+> Estado validado: el script de instalación y gestión quedó funcionando; si ves un error visual en `/setup`, normalmente se trata de caché o render del navegador, no del instalador.
+
 ### 4. Operación diaria
 
 ```bash

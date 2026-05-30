@@ -533,12 +533,16 @@ abctl local uninstall
 
 **Síntomas:**
 
-- La UI local responde, pero la ruta `http://localhost:8000/setup` muestra un error de JavaScript o una pantalla en blanco
+- La UI local responde, pero la ruta `http://localhost:<puerto>/setup` muestra un error de JavaScript o una pantalla en blanco
 - El backend y el cluster pueden seguir activos aunque la vista no cargue bien
 
 **Causa habitual:**
 
 - Caché del navegador, sesión previa corrupta o assets frontend desincronizados en esa versión de Airbyte
+
+**Importante:**
+
+- Si el error sigue apareciendo incluso después de reinstalar WSL y probar con otro navegador, ya no apunta a la distro ni a Docker: normalmente es un problema del frontend de Airbyte o de la versión instalada
 
 **Qué probar primero:**
 
@@ -563,6 +567,14 @@ abctl local uninstall
 **Nota:**
 
 - Si la UI sigue fallando después de limpiar caché y reiniciar, probablemente sea un problema de la versión del frontend y no del script de instalación.
+
+**Siguiente paso recomendado:**
+
+- Probar otra versión de Airbyte/abctl antes de invertir más tiempo en reinstalar la distro WSL
+
+**Conclusión práctica:**
+
+- La instalación ya quedó validada; cuando la UI carga mal pero el cluster está arriba, el origen casi siempre está en el frontend o en la sesión/caché del navegador, no en el script.
 
 ---
 
