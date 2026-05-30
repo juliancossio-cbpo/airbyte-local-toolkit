@@ -261,7 +261,7 @@ abctl local install --no-browser
 
 **Nota para WSL2 con Docker Desktop:**
 
-Si estás en WSL2 y usas Docker Desktop, primero verifica que la integración esté habilitada para esta distribución. El script ya intenta resolver el acceso al daemon automáticamente; si `docker ps` falla, el problema suele estar en la integración del lado de Docker Desktop o en que el daemon no está levantado.
+Si estás en WSL2, el script usa el Docker disponible dentro de WSL2 y no depende de un Docker nativo de Windows. Si además usas Docker Desktop, asegúrate de que la integración con esta distribución esté habilitada; en ese caso, podrás ver los contenedores desde Docker Desktop, pero el flujo operativo sigue ejecutándose desde WSL2.
 
 **Verificar instalación:**
 
@@ -287,6 +287,34 @@ sudo systemctl status docker
 
 # Si falla, ver logs
 sudo journalctl -u docker --no-pager | tail -50
+```
+
+### Error: `docker-credential-desktop.exe` o `exec format error` en WSL2
+
+**Síntomas:**
+
+- `abctl` no puede crear el cluster de kind
+- El pull de imágenes falla con `error getting credentials`
+- Aparece `fork/exec /usr/bin/docker-credential-desktop.exe: exec format error`
+
+**Causa habitual:**
+
+- El cliente Docker dentro de WSL2 está leyendo una configuración generada por Docker Desktop para Windows
+
+**Solución aplicada por el script:**
+
+- El instalador crea una configuración temporal de Docker dentro de WSL2 para evitar el helper de Windows durante la instalación
+
+**Si sigue ocurriendo:**
+
+```bash
+# Verificar que no estés forzando una configuración de Docker de Windows
+echo "$DOCKER_CONFIG"
+
+# Revisar tu config actual
+cat ~/.docker/config.json
+
+# Si ves credHelpers o credsStore apuntando a desktop.exe, muévelo o corrígelo para WSL2
 ```
 
 ---

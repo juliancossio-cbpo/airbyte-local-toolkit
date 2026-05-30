@@ -39,6 +39,7 @@ check_command() {
 
 DOCKER_CMD=(docker)
 COMPOSE_CMD=()
+DOCKER_CONFIG_DIR=""
 
 is_wsl2() {
     grep -qi microsoft /proc/version 2>/dev/null || uname -r | grep -qi microsoft
@@ -98,6 +99,26 @@ configure_compose_command() {
 
     return 1
 }
+
+prepare_wsl2_docker_config() {
+    if ! is_wsl2; then
+        return 0
+    fi
+
+    DOCKER_CONFIG_DIR=$(mktemp -d "${TMPDIR:-/tmp}/airbyte-docker-config.XXXXXX")
+    printf '%s\n' '{}' > "$DOCKER_CONFIG_DIR/config.json"
+    export DOCKER_CONFIG="$DOCKER_CONFIG_DIR"
+
+    log_info "WSL2 detectado: usando una configuración temporal de Docker para evitar el helper de Windows."
+}
+
+cleanup_wsl2_docker_config() {
+    if [ -n "$DOCKER_CONFIG_DIR" ] && [ -d "$DOCKER_CONFIG_DIR" ]; then
+        rm -rf "$DOCKER_CONFIG_DIR"
+    fi
+}
+
+trap cleanup_wsl2_docker_config EXIT
 
 AIRBYTE_PORT_FILE="$HOME/.airbyte/abctl/airbyte-port"
 AIRBYTE_PORT=8000
@@ -190,6 +211,8 @@ if ! configure_docker_access; then
     fi
     exit 1
 fi
+
+prepare_wsl2_docker_config
 
 # Instalar Docker Compose Plugin (v2) si no está disponible
 if ! configure_compose_command; then

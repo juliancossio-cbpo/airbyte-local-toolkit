@@ -6,11 +6,13 @@
 
 Si quieres llegar a Airbyte funcionando lo antes posible, sigue este flujo:
 
+> Recomendación práctica: en Ubuntu/Debian nativo o en una VM Linux (AWS, GCP, DigitalOcean, etc.) el flujo es más directo. En WSL2 también funciona, pero debe ejecutarse desde WSL2 con Docker integrado o con Docker Desktop habilitado para esa distro.
+
 ### 1. Prepara el entorno
 
 - Usa WSL2 con Ubuntu 22.04+ en Windows, o Ubuntu/Debian nativo compatible
 - Verifica que tengas al menos 10 GB libres, `sudo` y red estable
-- Si estás en WSL2, confirma que Docker Desktop tenga la integración habilitada o usa Docker Engine dentro de WSL2
+- Si estás en WSL2, el script usa Docker desde la propia distro WSL2; Docker Desktop solo sirve como integración/visor si tienes la integración habilitada
 
 ### 2. Instala
 
@@ -267,6 +269,8 @@ Los scripts **NO son compatibles** con:
 2. **Networking**: El puerto 8000 será accesible desde Windows vía `localhost:8000`
 3. **Recursos**: WSL2 usa virtualización, asegúrate de configurar `.wslconfig` apropiadamente
 4. **Docker Desktop**: si usas WSL2, Docker Desktop es compatible siempre que la integración con la distro esté habilitada; si prefieres un entorno totalmente autónomo, usa Docker Engine dentro de WSL2
+
+  Nota práctica: cuando el script se ejecuta dentro de WSL2, trabaja contra el Docker disponible en WSL2. Si tienes Docker Desktop integrado, podrás ver los contenedores desde Docker Desktop, pero el control real sigue saliendo desde WSL2.
 
 #### Acceso a Archivos desde Windows
 
