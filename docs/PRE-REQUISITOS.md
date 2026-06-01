@@ -25,6 +25,15 @@ Use este documento para verificar rápidamente que su sistema cumple con todos l
 - [ ] Permisos sudo configurados
 - [ ] Conexión a internet activa
 
+### Para Usuarios de una VM Aislada
+
+- [ ] Ubuntu Server 24.04 LTS instalado en la VM
+- [ ] Red funcional con salida a internet
+- [ ] Al menos 10 GB de espacio libre en disco
+- [ ] Puerto 8000 disponible o redirección configurada
+- [ ] Permisos sudo configurados
+- [ ] Docker accesible desde la VM
+
 ---
 
 ## 🔍 Comandos de Verificación Rápida
@@ -45,7 +54,7 @@ uname -r | grep -i microsoft
 # wsl -l -v
 ```
 
-**✅ Resultado esperado:** Ubuntu 20.04+, Debian 11+, o WSL2 con Docker Desktop integrado o Docker Engine local
+**✅ Resultado esperado:** Ubuntu 20.04+, Debian 11+, Ubuntu Server 24.04 LTS en VM aislada, o WSL2 con Docker Desktop integrado o Docker Engine local
 
 ---
 
@@ -438,4 +447,5 @@ Si tienes algún ❌, consulta:
 
 ---
 
-**¡Buena suerte con tu instalación de Airbyte! 🚀**  
+**¡Buena suerte con tu instalación de Airbyte! 🚀**
+

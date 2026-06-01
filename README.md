@@ -1,18 +1,18 @@
 # Airbyte Local Toolkit
 
-**airbyte-local-toolkit** es una forma guiada de levantar y operar Airbyte en local con una experiencia pensada para WSL2 y Ubuntu/Debian nativos. El objetivo es simple: instalar rápido, verificar que todo quedó bien y luego administrar Airbyte sin tener que recordar comandos dispersos.
+**airbyte-local-toolkit** es una forma guiada de levantar y operar Airbyte en local con una experiencia pensada para WSL2, Ubuntu/Debian nativos y una VM aislada con Ubuntu Server 24.04 LTS. El objetivo es simple: instalar rápido, verificar que todo quedó bien y luego administrar Airbyte sin tener que recordar comandos dispersos.
 
 ## 🚀 Get Started
 
 Si quieres llegar a Airbyte funcionando lo antes posible, sigue este recorrido en orden. Está escrito para que puedas leerlo de arriba hacia abajo sin saltarte pasos:
 
-> Recomendación práctica: en Ubuntu/Debian nativo o en una VM Linux (AWS, GCP, DigitalOcean, etc.) el flujo es más directo. En WSL2 también funciona, pero debe ejecutarse desde WSL2 con Docker integrado o con Docker Desktop habilitado para esa distro.
+> Recomendación práctica: en Ubuntu/Debian nativo o en una VM Linux aislada el flujo es más directo. Las pruebas más recientes se hicieron en una VM aislada con Ubuntu Server 24.04 LTS. En WSL2 también funciona, pero debe ejecutarse desde WSL2 con Docker integrado o con Docker Desktop habilitado para esa distro.
 
 ### 1. Prepara el entorno
 
 Empieza por confirmar que tu sistema cumple los pre-requisitos mínimos y que estás usando el entorno correcto.
 
-- Usa WSL2 con Ubuntu 22.04+ en Windows, o Ubuntu/Debian nativo compatible
+- Usa WSL2 con Ubuntu 22.04+ en Windows, o Ubuntu/Debian nativo compatible; también funciona en una VM aislada con Ubuntu Server 24.04 LTS
 - Verifica que tengas al menos 10 GB libres, `sudo` y red estable
 - Si estás en WSL2, el script usa Docker desde la propia distro WSL2; Docker Desktop solo sirve como integración/visor si tienes la integración habilitada
 
@@ -71,6 +71,7 @@ Una vez levantado, ya puedes operar el entorno con los comandos habituales:
 
 Este toolkit se ha probado principalmente en los siguientes entornos:
 
+- VM aislada con Ubuntu Server 24.04 LTS
 - WSL2 con Ubuntu 22.04
 - WSL2 con Ubuntu 24.04
 - WSL2 con Debian
@@ -891,3 +892,4 @@ Los scripts están diseñados para facilitar el trabajo de la Ingeniería de Dat
 ---
 
 **¡Listo para comenzar con Airbyte! 🚀**
+

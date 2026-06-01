@@ -1,6 +1,6 @@
 # 🛠️ Guía de Solución de Problemas - Airbyte
 
-Esta guía cubre los problemas más comunes al instalar y ejecutar Airbyte en WSL2 y sistemas Ubuntu/Debian nativos.
+Esta guía cubre los problemas más comunes al instalar y ejecutar Airbyte en WSL2, sistemas Ubuntu/Debian nativos y una VM aislada con Ubuntu Server 24.04 LTS.
 
 ---
 
@@ -900,3 +900,4 @@ Antes de reportar un problema, verifica:
 ---
 
 **¿Resolviste tu problema o encontraste una nueva solución? ¡Contribuye a esta guía!**
+
