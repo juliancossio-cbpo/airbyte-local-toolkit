@@ -51,6 +51,20 @@ chmod +x airbyte-setup.sh scripts/airbyte-management.sh
 - Diagnóstico y troubleshooting orientados a WSL2 y Linux nativo
 - Ejemplos para automatización con API y Python
 
+## Entornos probados
+
+Este toolkit se ha probado principalmente en los siguientes entornos:
+
+- WSL2 con Ubuntu 22.04
+- WSL2 con Ubuntu 24.04
+- WSL2 con Debian
+
+Versiones validadas en las pruebas realizadas:
+
+- Docker 29.1.3
+- docker-compose 1.29.2
+- Git 2.34.1
+
 ## Cómo leer esta guía
 
 1. Primero revisa los pre-requisitos si aún no confirmaste tu entorno.
