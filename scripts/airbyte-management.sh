@@ -383,6 +383,47 @@ update_airbyte() {
     print_success "Actualización completada"
 }
 
+uninstall_airbyte() {
+    print_header "Desinstalación completa de Airbyte"
+
+    echo "Esta acción eliminará Airbyte, su estado local y el puerto persistido."
+    echo "No borrará Docker ni tus backups personales."
+    echo ""
+    read -p "¿Continuar? (s/N): " -n 1 -r
+    echo
+
+    if [[ ! $REPLY =~ ^[Ss]$ ]]; then
+        print_info "Desinstalación cancelada"
+        return 0
+    fi
+
+    print_info "Deshabilitando auto-inicio si está configurado..."
+    disable_autostart >/dev/null 2>&1 || true
+
+    if command -v abctl &> /dev/null; then
+        print_info "Ejecutando desinstalación asistida con abctl..."
+        abctl local uninstall || print_warning "abctl devolvió un error durante la desinstalación; continuaré con la limpieza local."
+    else
+        print_warning "abctl no está instalado; se omitirá la desinstalación asistida."
+    fi
+
+    print_info "Eliminando contenedores y volúmenes residuales de Airbyte..."
+    residual_containers=$(run_docker ps -aq --filter "name=airbyte" 2>/dev/null || true)
+    if [ -n "$residual_containers" ]; then
+        run_docker rm -f $residual_containers >/dev/null 2>&1 || true
+    fi
+
+    residual_volumes=$(run_docker volume ls -q 2>/dev/null | grep '^airbyte' || true)
+    if [ -n "$residual_volumes" ]; then
+        run_docker volume rm $residual_volumes >/dev/null 2>&1 || true
+    fi
+
+    print_info "Eliminando estado local persistido..."
+    rm -rf "$HOME/.airbyte/abctl" 2>/dev/null || sudo rm -rf "$HOME/.airbyte/abctl" 2>/dev/null || true
+
+    print_success "Desinstalación completa finalizada"
+}
+
 # ============================================================================
 # LOGS Y DEBUGGING
 # ============================================================================
@@ -774,8 +815,11 @@ show_menu() {
     echo "  13) Habilitar auto-inicio en el sistema"
     echo "  14) Deshabilitar auto-inicio"
     echo ""
+    echo "DESINSTALACIÓN:"
+    echo "  15) Desinstalar Airbyte completamente"
+    echo ""
     echo "MANTENIMIENTO:"
-    echo "  15) Limpieza y mantenimiento"
+    echo "  16) Limpieza y mantenimiento"
     echo ""
     echo "  0)  Salir"
     echo ""
@@ -812,7 +856,8 @@ main() {
                 12) generate_api_script ;;
                 13) enable_autostart ;;
                 14) disable_autostart ;;
-                15) cleanup_airbyte ;;
+                15) uninstall_airbyte ;;
+                16) cleanup_airbyte ;;
                 0) print_info "¡Hasta luego!"; exit 0 ;;
                 *) print_error "Opción inválida" ;;
             esac
@@ -837,9 +882,10 @@ main() {
             generate-api-script) generate_api_script ;;
             enable-autostart) enable_autostart ;;
             disable-autostart) disable_autostart ;;
+            uninstall) uninstall_airbyte ;;
             cleanup) cleanup_airbyte ;;
             *)
-                echo "Uso: $0 {start|stop|restart|status|credentials|backup|restore|update|logs|troubleshoot|test-api|generate-api-script|enable-autostart|disable-autostart|cleanup}"
+                echo "Uso: $0 {start|stop|restart|status|credentials|backup|restore|update|logs|troubleshoot|test-api|generate-api-script|enable-autostart|disable-autostart|uninstall|cleanup}"
                 echo "O ejecuta sin argumentos para el menú interactivo"
                 exit 1
                 ;;

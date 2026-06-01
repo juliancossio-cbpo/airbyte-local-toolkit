@@ -88,6 +88,12 @@ abctl local credentials
 
 # Ver credenciales
 ./airbyte-management.sh credentials
+
+# Desinstalar completamente Airbyte
+./airbyte-management.sh uninstall
+
+# Limpiar logs, backups e imágenes no utilizadas
+./airbyte-management.sh cleanup
 ```
 
 ---
