@@ -162,16 +162,10 @@ configure_docker_access() {
 }
 
 configure_compose_command() {
-    # 1. Validar si el plugin moderno 'docker compose' responde correctamente
+    # Validar si el plugin moderno 'docker compose' responde correctamente
     if run_docker compose version >/dev/null 2>&1; then
         COMPOSE_CMD=("${DOCKER_CMD[@]}" compose)
         return 0
-    fi
-
-    # 2. Corregido: Validar binario antiguo usando '--version' para evitar llamadas al daemon sin permisos de grupo activos
-    if check_command docker-compose && docker-compose --version >/dev/null 2>&1; then
-         COMPOSE_CMD=(docker-compose)
-         return 0
     fi
 
     return 1
@@ -317,7 +311,7 @@ fi
 
 prepare_wsl2_docker_config
 
-# Manejo inteligente de Docker Compose
+# Instalar Docker Compose Plugin (v2) si no está disponible
 if ! configure_compose_command; then
     log_info "Docker Compose no detectado. Intentando instalar..."
     run_with_spinner "Instalando Docker Compose" bash -lc 'sudo apt install -y docker-compose-plugin || sudo apt install -y docker-compose'
@@ -507,3 +501,23 @@ echo "  - Ver estado: abctl local status"
 echo "  - Detener/Remover: abctl local uninstall"
 echo "  - Ver credenciales: abctl local credentials"
 echo ""
+
+
+# Comandos de desinstalación manual (si es necesario):
+# ----------------------------------
+# 1. Desinstalar completamente:
+#   abctl local uninstall
+
+# 2. Limpiar archivos de configuración y datos (ADVERTENCIA: BORRARÁ TODOS LOS DATOS):
+#   sudo rm -rf ~/.airbyte/abctl/data
+
+# 3. Verificar que no queden contenedores o volúmenes residuales:
+#   docker ps -a | grep airbyte
+#   docker volume ls | grep airbyte
+
+# 4. Eliminar contenedores o volúmenes residuales (si es necesario):
+#   docker rm -f <container_id>
+#   docker volume rm <volume_name>
+
+# 5. Reinstalar con el script después de limpiar:
+#   ./airbyte-setup.sh
