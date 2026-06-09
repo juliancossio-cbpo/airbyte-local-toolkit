@@ -325,7 +325,7 @@ if ! configure_compose_command; then
     log_success "Docker Compose instalado correctamente."
 else
     log_info "Docker Compose ya está instalado. Versión:"
-    run_compose version
+    run_compose --version
 fi
 
 # ------------------------------
