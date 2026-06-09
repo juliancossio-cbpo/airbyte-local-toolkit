@@ -314,19 +314,23 @@ prepare_wsl2_docker_config
 # Instalar Docker Compose Plugin (v2) si no está disponible
 if ! configure_compose_command; then
     log_info "Docker Compose no detectado. Intentando instalar..."
-    run_with_spinner "Instalando Docker Compose" bash -lc 'sudo apt install -y docker-compose-v2 || sudo apt install -y docker-compose-plugin || sudo apt install -y docker-compose'
+    
+    # Intentar instalar el paquete nativo de Ubuntu 24.04 (docker-compose-v2), el oficial o el antiguo
+    run_with_spinner "Instalando Docker Compose" bash -lc '
+        sudo apt-get update && \
+        (sudo apt-get install -y docker-compose-v2 || \
+         sudo apt-get install -y docker-compose-plugin || \
+         sudo apt-get install -y docker-compose)
+    '
     
     # Volver a verificar tras el intento de instalación
     if configure_compose_command; then
         log_success "Docker Compose configurado correctamente. Versión:"
-        run_compose --version
-    else
-        log_error "No se pudo configurar Docker Compose automáticamente. Revisa tus repositorios."
-        exit 1
+        run_compose version
     fi
 else
     log_info "Docker Compose ya está instalado y configurado. Versión:"
-    run_compose --version
+    run_compose version
 fi
 
 # ------------------------------
