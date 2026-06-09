@@ -464,10 +464,10 @@ install_airbyte() {
     export BROWSER=echo
     
     if run_docker ps &> /dev/null; then
-        run_with_spinner "Instalando Airbyte Core" bash -lc "abctl local install --no-browser --port '$AIRBYTE_PORT' --host '$AIRBYTE_HOST' --insecure-cookies 2>/dev/null || abctl local install --port '$AIRBYTE_PORT' --host '$AIRBYTE_HOST' --insecure-cookies"
+        run_with_spinner "Instalando Airbyte Core" bash -lc "abctl local install --no-browser --port '$AIRBYTE_PORT' --insecure-cookies 2>/dev/null || abctl local install --port '$AIRBYTE_PORT' --insecure-cookies"
     elif getent group docker >/dev/null 2>&1 && sudo run_docker ps &> /dev/null; then
         log_info "Aplicando permisos del grupo docker de forma temporal..."
-        run_with_spinner "Instalando Airbyte Core (sg docker)" sg docker -c "export BROWSER=echo; abctl local install --no-browser --port '$AIRBYTE_PORT' --host '$AIRBYTE_HOST' --insecure-cookies 2>/dev/null || abctl local install --port '$AIRBYTE_PORT' --host '$AIRBYTE_HOST' --insecure-cookies"
+        run_with_spinner "Instalando Airbyte Core (sg docker)" sg docker -c "export BROWSER=echo; abctl local install --no-browser --port '$AIRBYTE_PORT' --insecure-cookies 2>/dev/null || abctl local install --port '$AIRBYTE_PORT' --insecure-cookies"
     else
         log_error "No hay acceso operativo a Docker para ejecutar abctl."
         return 1
