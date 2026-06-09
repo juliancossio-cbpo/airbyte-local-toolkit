@@ -162,17 +162,15 @@ configure_docker_access() {
 }
 
 configure_compose_command() {
+    # Validar si el plugin moderno 'docker compose' responde correctamente
     if run_docker compose version >/dev/null 2>&1; then
         COMPOSE_CMD=("${DOCKER_CMD[@]}" compose)
         return 0
     fi
 
-    if check_command docker compose; then
-        if [ "${DOCKER_CMD[0]}" = "sudo" ]; then
-            COMPOSE_CMD=(sudo docker compose)
-        else
-            COMPOSE_CMD=(docker compose)
-        fi
+    # Validar el binario antiguo por si acaso ('docker-compose')
+    if check_command docker-compose && docker-compose version >/dev/null 2>&1; then
+        COMPOSE_CMD=(docker-compose)
         return 0
     fi
 
