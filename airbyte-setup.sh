@@ -169,10 +169,10 @@ configure_compose_command() {
     fi
 
     # Validar el binario antiguo por si acaso ('docker-compose')
-    if check_command docker-compose && docker-compose version >/dev/null 2>&1; then
-        COMPOSE_CMD=(docker-compose)
-        return 0
-    fi
+    # if check_command docker-compose && docker-compose version >/dev/null 2>&1; then
+    #     COMPOSE_CMD=(docker-compose)
+    #     return 0
+    # fi
 
     return 1
 }
