@@ -174,11 +174,11 @@ configure_compose_command() {
         return 0
     fi
 
-    if check_command docker-compose; then
+    if check_command docker compose; then
         if [ "${DOCKER_CMD[0]}" = "sudo" ]; then
-            COMPOSE_CMD=(sudo docker-compose)
+            COMPOSE_CMD=(sudo docker compose)
         else
-            COMPOSE_CMD=(docker-compose)
+            COMPOSE_CMD=(docker compose)
         fi
         return 0
     fi
@@ -307,7 +307,7 @@ prepare_wsl2_docker_config
 # Instalar Docker Compose Plugin (v2) si no está disponible
 if ! configure_compose_command; then
     log_info "Instalando Docker Compose..."
-    run_with_spinner "Instalando Docker Compose" bash -lc 'sudo apt install -y docker-compose-plugin || sudo apt install -y docker-compose'
+    run_with_spinner "Instalando Docker Compose" bash -lc 'sudo apt install -y docker compose-plugin || sudo apt install -y docker compose'
     log_success "Docker Compose instalado correctamente."
 else
     log_info "Docker Compose ya está instalado. Versión:"
