@@ -314,7 +314,7 @@ prepare_wsl2_docker_config
 # Instalar Docker Compose Plugin (v2) si no está disponible
 if ! configure_compose_command; then
     log_info "Docker Compose no detectado. Intentando instalar..."
-    run_with_spinner "Instalando Docker Compose" bash -lc 'sudo apt install -y docker-compose-plugin || sudo apt install -y docker-compose'
+    run_with_spinner "Instalando Docker Compose" bash -lc 'sudo apt install -y docker-compose-v2 || sudo apt install -y docker-compose-plugin || sudo apt install -y docker-compose'
     
     # Volver a verificar tras el intento de instalación
     if configure_compose_command; then
