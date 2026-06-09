@@ -168,12 +168,6 @@ configure_compose_command() {
         return 0
     fi
 
-    # Validar el binario antiguo por si acaso ('docker-compose')
-    # if check_command docker-compose && docker-compose version >/dev/null 2>&1; then
-    #     COMPOSE_CMD=(docker-compose)
-    #     return 0
-    # fi
-
     return 1
 }
 
@@ -319,12 +313,19 @@ prepare_wsl2_docker_config
 
 # Instalar Docker Compose Plugin (v2) si no está disponible
 if ! configure_compose_command; then
-    log_info "Instalando Docker Compose..."
+    log_info "Docker Compose no detectado. Intentando instalar..."
     run_with_spinner "Instalando Docker Compose" bash -lc 'sudo apt install -y docker-compose-plugin || sudo apt install -y docker-compose'
-    configure_compose_command || true
-    log_success "Docker Compose instalado correctamente."
+    
+    # Volver a verificar tras el intento de instalación
+    if configure_compose_command; then
+        log_success "Docker Compose configurado correctamente. Versión:"
+        run_compose --version
+    else
+        log_error "No se pudo configurar Docker Compose automáticamente. Revisa tus repositorios."
+        exit 1
+    fi
 else
-    log_info "Docker Compose ya está instalado. Versión:"
+    log_info "Docker Compose ya está instalado y configurado. Versión:"
     run_compose --version
 fi
 
@@ -500,8 +501,6 @@ echo "  - Ver estado: abctl local status"
 echo "  - Detener/Remover: abctl local uninstall"
 echo "  - Ver credenciales: abctl local credentials"
 echo ""
-
-```
 
 
 # Comandos de desinstalación manual (si es necesario):
