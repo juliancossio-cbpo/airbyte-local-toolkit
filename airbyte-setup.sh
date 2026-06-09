@@ -8,38 +8,20 @@
 # ./airbyte-setup.sh
 
 # ----------------------------------------
-# Configuración de manejo de errores
+# Configuración Global y Manejo de Errores
 # ----------------------------------------
-set -e  # Detener ejecución si cualquier comando falla
-set -u  # Error si se usan variables no definidas
-set -o pipefail  # Detectar errores en pipes
+set -e          # Detener ejecución si cualquier comando falla
+set -u          # Error si se usan variables no definidas
+set -o pipefail # Detectar errores en pipes
 
+# Variables de configuración editables
+AIRBYTE_PORT_FILE="$HOME/.airbyte/abctl/airbyte-port"
+AIRBYTE_PORT=8000
+AIRBYTE_HOST="10.10.0.2" # IP donde se servirá Airbyte
 ASSUME_YES=0
 
-while [ "$#" -gt 0 ]; do
-    case "$1" in
-        -y|--yes|--non-interactive)
-            ASSUME_YES=1
-            ;;
-        --help|-h)
-            cat <<'EOF'
-Uso: ./airbyte-setup.sh [--yes]
-
-Opciones:
-  -y, --yes, --non-interactive   Ejecuta sin pedir confirmaciones y usa valores seguros por defecto.
-EOF
-            exit 0
-            ;;
-        *)
-            log_error "Argumento no reconocido: $1"
-            exit 1
-            ;;
-    esac
-    shift
-done
-
 # ----------------------------------------
-# Funciones auxiliares
+# Funciones auxiliares (Definidas al inicio)
 # ----------------------------------------
 USE_COLORS=0
 USE_SPINNER=0
@@ -73,6 +55,14 @@ log_error() {
 
 log_success() {
     printf '%b\n' "${GREEN}[SUCCESS]${NC} $(date '+%Y-%m-%d %H:%M:%S') - $1"
+}
+
+check_command() {
+    if command -v "$1" &> /dev/null; then
+        return 0
+    else
+        return 1
+    fi
 }
 
 run_with_spinner() {
@@ -115,14 +105,6 @@ run_with_spinner() {
     return "$exit_code"
 }
 
-check_command() {
-    if command -v "$1" &> /dev/null; then
-        return 0
-    else
-        return 1
-    fi
-}
-
 DOCKER_CMD=(docker)
 COMPOSE_CMD=()
 DOCKER_CONFIG_DIR=""
@@ -137,6 +119,17 @@ run_docker() {
 
 run_compose() {
     "${COMPOSE_CMD[@]}" "$@"
+}
+
+# Envoltura inteligente para ejecutar abctl con los permisos correctos de la sesión actual
+run_abctl() {
+    if run_docker ps >/dev/null 2>&1; then
+        abctl "$@"
+    elif getent group docker >/dev/null 2>&1 && check_command sg; then
+        sg docker -c "export BROWSER=echo; abctl $(printf '%q ' "$@")"
+    else
+        sudo abctl "$@"
+    fi
 }
 
 configure_docker_access() {
@@ -206,9 +199,6 @@ cleanup_wsl2_docker_config() {
 
 trap cleanup_wsl2_docker_config EXIT
 
-AIRBYTE_PORT_FILE="$HOME/.airbyte/abctl/airbyte-port"
-AIRBYTE_PORT=8000
-
 is_port_available() {
     local port="$1"
 
@@ -225,7 +215,7 @@ is_port_available() {
 
 select_airbyte_port() {
     local candidate
-    local candidates=(8000 18080 19080 28080 38080 48080)
+    local candidates=("$AIRBYTE_PORT" 8000 18080 19080 28080 38080 48080)
 
     for candidate in "${candidates[@]}"; do
         if is_port_available "$candidate"; then
@@ -251,6 +241,31 @@ load_airbyte_port() {
         fi
     fi
 }
+
+# ----------------------------------------
+# Procesamiento de Argumentos de Entrada
+# ----------------------------------------
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        -y|--yes|--non-interactive)
+            ASSUME_YES=1
+            ;;
+        --help|-h)
+            cat <<'EOF'
+Uso: ./airbyte-setup.sh [--yes]
+
+Opciones:
+  -y, --yes, --non-interactive   Ejecuta sin pedir confirmaciones y usa valores seguros por defecto.
+EOF
+            exit 0
+            ;;
+        *)
+            log_error "Argumento no reconocido: $1"
+            exit 1
+            ;;
+    esac
+    shift
+done
 
 # ----------------------------------------
 # Verificaciones previas
@@ -286,7 +301,7 @@ run_with_spinner "Instalando curl y git" sudo apt install -y curl git
 # Verificar si Docker ya está instalado
 if check_command docker; then
     log_info "Docker ya está instalado. Versión:"
-    docker --version
+    run_docker --version
 else
     log_info "Instalando Docker..."
     run_with_spinner "Instalando Docker" sudo apt install -y docker.io
@@ -307,12 +322,11 @@ prepare_wsl2_docker_config
 # Instalar Docker Compose Plugin (v2) si no está disponible
 if ! configure_compose_command; then
     log_info "Instalando Docker Compose..."
-    run_with_spinner "Instalando Docker Compose" bash -lc 'sudo apt install -y docker compose-plugin || sudo apt install -y docker compose'
+    run_with_spinner "Instalando Docker Compose" bash -lc 'sudo apt install -y docker-compose-plugin || sudo apt install -y docker-compose'
     log_success "Docker Compose instalado correctamente."
 else
     log_info "Docker Compose ya está instalado. Versión:"
-    # run_compose
-    docker compose --version
+    run_docker compose version
 fi
 
 # ------------------------------
@@ -343,7 +357,7 @@ if getent group docker >/dev/null 2>&1 && groups "$USER" | grep -q '\bdocker\b';
     log_info "El usuario ya pertenece al grupo docker."
 elif getent group docker >/dev/null 2>&1; then
     log_info "Agregando usuario al grupo docker..."
-    sudo usermod -aG docker $USER
+    sudo usermod -aG docker "$USER"
     log_success "Usuario agregado al grupo docker."
 else
     log_info "El grupo docker no existe en este entorno. Se omite la reasignación de grupos."
@@ -356,18 +370,18 @@ log_info "Instalando Airbyte CLI (abctl)..."
 
 if check_command abctl; then
     log_info "abctl ya está instalado. Versión actual:"
-    abctl version
+    run_abctl version
     if [ "$ASSUME_YES" -eq 1 ] || [ ! -t 0 ]; then
         log_info "Modo no interactivo: se conservará la versión actual de abctl."
         log_info "Saltando instalación de abctl."
     else
         read -p "¿Deseas reinstalar abctl? (s/N): " -n 1 -r
         echo
-        if [[ ! $REPLY =~ ^[Ss]$ ]]; then
-            log_info "Saltando instalación de abctl."
-        else
+        if [[ $REPLY =~ ^[Ss]$ ]]; then
             curl -LsfS https://get.airbyte.com | bash -
             log_success "abctl reinstalado correctamente."
+        else
+            log_info "Saltando instalación de abctl."
         fi
     fi
 else
@@ -377,7 +391,7 @@ fi
 
 # Validar instalación de Airbyte CLI
 log_info "Validando instalación de abctl..."
-abctl version
+run_abctl version
 
 # ------------------------------
 # 5. Instalar Airbyte Core en el entorno local
@@ -390,9 +404,7 @@ if run_docker ps --format '{{.Names}}' 2>/dev/null | grep -q 'airbyte-abctl'; th
     log_info "Se detectó una instalación existente de Airbyte."
     if [ "$ASSUME_YES" -eq 1 ] || [ ! -t 0 ]; then
         log_info "Modo no interactivo: se conservará la instalación actual."
-        log_info "Airbyte está ejecutándose en: http://localhost:${AIRBYTE_PORT}"
-        log_info "Para ver credenciales ejecuta: abctl local credentials"
-        log_info "Para ver estado ejecuta: abctl local status"
+        log_info "Airbyte está ejecutándose en: http://${AIRBYTE_HOST}:${AIRBYTE_PORT}"
         exit 0
     fi
 
@@ -408,7 +420,7 @@ if run_docker ps --format '{{.Names}}' 2>/dev/null | grep -q 'airbyte-abctl'; th
     case $REPLY in
         2)
             log_info "Desinstalando Airbyte existente..."
-            abctl local uninstall || true
+            run_abctl local uninstall || true
             
             log_info "Limpiando archivos de configuración y datos..."
             sudo rm -rf ~/.airbyte/abctl/data || true
@@ -420,15 +432,14 @@ if run_docker ps --format '{{.Names}}' 2>/dev/null | grep -q 'airbyte-abctl'; th
             ;;
         3)
             log_info "Intentando reparar permisos..."
-            sudo chown -R $USER:$USER ~/.airbyte/abctl/data 2>/dev/null || true
+            sudo chown -R "$USER:$USER" ~/.airbyte/abctl/data 2>/dev/null || true
             log_info "Reparación completada. Intentando continuar con instalación..."
             ;;
         1|*)
-            log_info "Manteniendo instalación actual."
+            log_info "Mantening instalación actual."
             echo ""
-            log_info "Airbyte está ejecutándose en: http://localhost:${AIRBYTE_PORT}"
-            log_info "Para ver credenciales ejecuta: abctl local credentials"
-            log_info "Para ver estado ejecuta: abctl local status"
+            log_info "Airbyte está ejecutándose en: http://${AIRBYTE_HOST}:${AIRBYTE_PORT}"
+            echo -n "Credenciales: " && run_abctl local credentials
             exit 0
             ;;
     esac
@@ -437,26 +448,22 @@ fi
 log_info "Instalando Airbyte Core en el entorno local..."
 log_info "Este proceso puede tardar varios minutos..."
 if ! select_airbyte_port; then
-    log_error "No se encontró un puerto libre para Airbyte. Libera 8000 o un puerto alterno y vuelve a intentarlo."
+    log_error "No se encontró un puerto libre para Airbyte. Libera $AIRBYTE_PORT o un puerto alterno y vuelve a intentarlo."
     exit 1
 fi
 
 log_info "Puerto de acceso seleccionado: $AIRBYTE_PORT"
 save_airbyte_port
 
-# Función para instalar Airbyte con permisos de Docker
+# Función corregida para instalar Airbyte con deshabilitación de cookies seguras en ambas rutas
 install_airbyte() {
-    # Establecer BROWSER=echo para evitar que intente abrir el navegador automáticamente
     export BROWSER=echo
     
-    # Intentar primero con acceso directo al daemon desde la sesión actual
-    if docker ps &> /dev/null; then
-        run_with_spinner "Instalando Airbyte Core en el entorno local" bash -lc "abctl local install --no-browser --port '$AIRBYTE_PORT' 2>/dev/null || abctl local install --port '$AIRBYTE_PORT'"
-    elif getent group docker >/dev/null 2>&1 && sudo docker ps &> /dev/null; then
-        # Si el usuario pertenece al grupo docker pero la sesión aún no lo refleja, ejecutamos el comando en ese grupo
-        log_info "Aplicando permisos del grupo docker..."
-        # run_with_spinner "Instalando Airbyte Core en el entorno local" sg docker -c "BROWSER=echo abctl local install --no-browser --port '$AIRBYTE_PORT' 2>/dev/null || abctl local install --port '$AIRBYTE_PORT'"
-        run_with_spinner "Instalando Airbyte Core en el entorno local" sg docker -c "BROWSER=echo abctl local install --no-browser --port '$AIRBYTE_PORT' --host 10.10.0.2 --insecure-cookies 2>/dev/null || abctl local install --port '$AIRBYTE_PORT' --host 10.10.0.2 --insecure-cookies"
+    if run_docker ps &> /dev/null; then
+        run_with_spinner "Instalando Airbyte Core" bash -lc "abctl local install --no-browser --port '$AIRBYTE_PORT' --host '$AIRBYTE_HOST' --insecure-cookies 2>/dev/null || abctl local install --port '$AIRBYTE_PORT' --host '$AIRBYTE_HOST' --insecure-cookies"
+    elif getent group docker >/dev/null 2>&1 && sudo run_docker ps &> /dev/null; then
+        log_info "Aplicando permisos del grupo docker de forma temporal..."
+        run_with_spinner "Instalando Airbyte Core (sg docker)" sg docker -c "export BROWSER=echo; abctl local install --no-browser --port '$AIRBYTE_PORT' --host '$AIRBYTE_HOST' --insecure-cookies 2>/dev/null || abctl local install --port '$AIRBYTE_PORT' --host '$AIRBYTE_HOST' --insecure-cookies"
     else
         log_error "No hay acceso operativo a Docker para ejecutar abctl."
         return 1
@@ -470,15 +477,7 @@ log_success "Airbyte Core instalado correctamente."
 # 6. Mostrar credenciales de Airbyte
 # -------------------------------
 log_info "Obteniendo credenciales de Airbyte..."
-
-if docker ps &> /dev/null; then
-    abctl local credentials
-elif getent group docker >/dev/null 2>&1 && sudo docker ps &> /dev/null; then
-    sg docker -c "abctl local credentials"
-else
-    log_error "No hay acceso operativo a Docker para obtener credenciales."
-    exit 1
-fi
+run_abctl local credentials
 
 # -------------------------------
 # Finalización
@@ -488,7 +487,7 @@ echo "========================================="
 log_success "¡Airbyte se ha instalado correctamente!"
 echo "========================================="
 echo ""
-log_info "Accede a Airbyte en: http://localhost:${AIRBYTE_PORT}"
+log_info "Accede a Airbyte en: http://${AIRBYTE_HOST}:${AIRBYTE_PORT}"
 echo ""
 log_info "IMPORTANTE: En el primer acceso deberás:"
 log_info "  1. Ingresar tu correo electrónico"
@@ -499,9 +498,11 @@ log_info "      cierra y abre una nueva terminal para que los cambios de grupo s
 echo ""
 log_info "Comandos útiles:"
 echo "  - Ver estado: abctl local status"
-echo "  - Detener: abctl local uninstall"
+echo "  - Detener/Remover: abctl local uninstall"
 echo "  - Ver credenciales: abctl local credentials"
 echo ""
+
+```
 
 
 # Comandos de desinstalación manual (si es necesario):
