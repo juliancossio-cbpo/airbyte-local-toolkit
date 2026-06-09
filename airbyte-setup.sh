@@ -321,10 +321,11 @@ prepare_wsl2_docker_config
 if ! configure_compose_command; then
     log_info "Instalando Docker Compose..."
     run_with_spinner "Instalando Docker Compose" bash -lc 'sudo apt install -y docker-compose-plugin || sudo apt install -y docker-compose'
+    configure_compose_command || true
     log_success "Docker Compose instalado correctamente."
 else
     log_info "Docker Compose ya está instalado. Versión:"
-    run_docker compose version
+    run_compose version
 fi
 
 # ------------------------------
@@ -434,7 +435,7 @@ if run_docker ps --format '{{.Names}}' 2>/dev/null | grep -q 'airbyte-abctl'; th
             log_info "Reparación completada. Intentando continuar con instalación..."
             ;;
         1|*)
-            log_info "Mantening instalación actual."
+            log_info "Manteniendo instalación actual."
             echo ""
             log_info "Airbyte está ejecutándose en: http://${AIRBYTE_HOST}:${AIRBYTE_PORT}"
             echo -n "Credenciales: " && run_abctl local credentials
