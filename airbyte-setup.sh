@@ -82,7 +82,7 @@ run_with_spinner() {
         return $?
     fi
 
-    local spinner_chars='|/-\\'
+    local spinner_chars='|/-\'
     local spinner_pid
     local exit_code=0
 
@@ -477,22 +477,23 @@ install_airbyte() {
 
     # Crear el archivo YAML con los recursos deseados
     cat <<EOF > "$VALUES_FILE"
-airbyte-abctl-worker:
-  resources:
-    requests:
-      memory: "$AIRBYTE_WORKER_MEMORY_REQUEST"
-      cpu: "$AIRBYTE_WORKER_CPU_REQUEST"
-    limits:
-      memory: "$AIRBYTE_WORKER_MEMORY_LIMIT"
-      cpu: "$AIRBYTE_WORKER_CPU_LIMIT"
-airbyte-abctl-workload-launcher:
-  resources:
-    requests:
-      memory: "$AIRBYTE_LAUNCHER_MEMORY_REQUEST"
-      cpu: "$AIRBYTE_LAUNCHER_CPU_REQUEST"
-    limits:
-      memory: "$AIRBYTE_LAUNCHER_MEMORY_LIMIT"
-      cpu: "$AIRBYTE_LAUNCHER_CPU_LIMIT"
+airbyte:
+  worker:
+    resources:
+      requests:
+        memory: "$AIRBYTE_WORKER_MEMORY_REQUEST"
+        cpu: "$AIRBYTE_WORKER_CPU_REQUEST"
+      limits:
+        memory: "$AIRBYTE_WORKER_MEMORY_LIMIT"
+        cpu: "$AIRBYTE_WORKER_CPU_LIMIT"
+  workload-launcher:
+    resources:
+      requests:
+        memory: "$AIRBYTE_LAUNCHER_MEMORY_REQUEST"
+        cpu: "$AIRBYTE_LAUNCHER_CPU_REQUEST"
+      limits:
+        memory: "$AIRBYTE_LAUNCHER_MEMORY_LIMIT"
+        cpu: "$AIRBYTE_LAUNCHER_CPU_LIMIT"
 EOF
 
     # Definición del comando de instalación
@@ -515,7 +516,12 @@ EOF
         return 1
     fi
 
-    # Limpieza del archivo temporal
+    # Parche forzoso de recursos
+    log_info "Aplicando ajustes de recursos mediante parches de Kubernetes..."
+    sleep 10
+    run_abctl local kubectl patch deployment airbyte-abctl-worker -n airbyte-abctl -p '{"spec":{"template":{"spec":{"containers":[{"name":"worker","resources":{"limits":{"memory":"'"$AIRBYTE_WORKER_MEMORY_LIMIT"'","cpu":"'"$AIRBYTE_WORKER_CPU_LIMIT"'"},"requests":{"memory":"'"$AIRBYTE_WORKER_MEMORY_REQUEST"'","cpu":"'"$AIRBYTE_WORKER_CPU_REQUEST"'"}}}]}}}}'
+    run_abctl local kubectl patch deployment airbyte-abctl-workload-launcher -n airbyte-abctl -p '{"spec":{"template":{"spec":{"containers":[{"name":"workload-launcher","resources":{"limits":{"memory":"'"$AIRBYTE_LAUNCHER_MEMORY_LIMIT"'","cpu":"'"$AIRBYTE_LAUNCHER_CPU_LIMIT"'"},"requests":{"memory":"'"$AIRBYTE_LAUNCHER_MEMORY_REQUEST"'","cpu":"'"$AIRBYTE_LAUNCHER_CPU_REQUEST"'"}}}]}}}}'
+    # Limpieza archivo temporal
     rm -f "$VALUES_FILE"
 }
 
