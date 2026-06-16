@@ -19,6 +19,14 @@ AIRBYTE_PORT_FILE="$HOME/.airbyte/abctl/airbyte-port"
 AIRBYTE_PORT=8000
 AIRBYTE_HOST="10.10.0.2" # IP donde se servirá Airbyte
 ASSUME_YES=0
+AIRBYTE_WORKER_MEMORY_REQUEST="4Gi"
+AIRBYTE_WORKER_MEMORY_LIMIT="8Gi"
+AIRBYTE_LAUNCHER_MEMORY_REQUEST="4Gi"
+AIRBYTE_LAUNCHER_MEMORY_LIMIT="8Gi"
+AIRBYTE_WORKER_CPU_REQUEST="2"
+AIRBYTE_WORKER_CPU_LIMIT="4"
+AIRBYTE_LAUNCHER_CPU_REQUEST="2"
+AIRBYTE_LAUNCHER_CPU_LIMIT="4"
 
 # ----------------------------------------
 # Funciones auxiliares (Definidas al inicio)
@@ -462,12 +470,56 @@ save_airbyte_port
 # Función corregida para instalar Airbyte con deshabilitación de cookies seguras en ambas rutas
 install_airbyte() {
     export BROWSER=echo
-    
+
+    export _JAVA_OPTIONS="-Xmx3g"
+
     if run_docker ps &> /dev/null; then
-        run_with_spinner "Instalando Airbyte Core" bash -lc "abctl local install --no-browser --port '$AIRBYTE_PORT' --insecure-cookies 2>/dev/null || abctl local install --port '$AIRBYTE_PORT' --insecure-cookies"
+        run_with_spinner "Instalando Airbyte Core" bash -lc "
+            abctl local install \
+                --no-browser \
+                --port '$AIRBYTE_PORT' \
+                --insecure-cookies \
+                --set airbyte-abctl-worker.resources.requests.memory=$AIRBYTE_WORKER_MEMORY_REQUEST \
+                --set airbyte-abctl-worker.resources.limits.memory=$AIRBYTE_WORKER_MEMORY_LIMIT \
+                --set airbyte-abctl-worker.resources.requests.cpu=$AIRBYTE_WORKER_CPU_REQUEST \
+                --set airbyte-abctl-worker.resources.limits.cpu=$AIRBYTE_WORKER_CPU_LIMIT \
+                \
+                --set airbyte-abctl-workload-launcher.resources.requests.memory=$AIRBYTE_LAUNCHER_MEMORY_REQUEST \
+                --set airbyte-abctl-workload-launcher.resources.limits.memory=$AIRBYTE_LAUNCHER_MEMORY_LIMIT \
+                --set airbyte-abctl-workload-launcher.resources.requests.cpu=$AIRBYTE_LAUNCHER_CPU_REQUEST \
+                --set airbyte-abctl-workload-launcher.resources.limits.cpu=$AIRBYTE_LAUNCHER_CPU_LIMIT \
+            2>/dev/null || \
+            abctl local install \
+                --port '$AIRBYTE_PORT' \
+                --insecure-cookies \
+                --set airbyte-abctl-worker.resources.requests.memory=$AIRBYTE_WORKER_MEMORY_REQUEST \
+                --set airbyte-abctl-worker.resources.limits.memory=$AIRBYTE_WORKER_MEMORY_LIMIT \
+                --set airbyte-abctl-workload-launcher.resources.requests.memory=$AIRBYTE_LAUNCHER_MEMORY_REQUEST \
+                --set airbyte-abctl-workload-launcher.resources.limits.memory=$AIRBYTE_LAUNCHER_MEMORY_LIMIT
+        "
+
     elif getent group docker >/dev/null 2>&1 && sudo run_docker ps &> /dev/null; then
         log_info "Aplicando permisos del grupo docker de forma temporal..."
-        run_with_spinner "Instalando Airbyte Core (sg docker)" sg docker -c "export BROWSER=echo; abctl local install --no-browser --port '$AIRBYTE_PORT' --insecure-cookies 2>/dev/null || abctl local install --port '$AIRBYTE_PORT' --insecure-cookies"
+        run_with_spinner "Instalando Airbyte Core (sg docker)" sg docker -c "
+            export BROWSER=echo;
+            export _JAVA_OPTIONS='-Xmx3g';
+            abctl local install \
+                --no-browser \
+                --port '$AIRBYTE_PORT' \
+                --insecure-cookies \
+                --set airbyte-abctl-worker.resources.requests.memory=$AIRBYTE_WORKER_MEMORY_REQUEST \
+                --set airbyte-abctl-worker.resources.limits.memory=$AIRBYTE_WORKER_MEMORY_LIMIT \
+                --set airbyte-abctl-workload-launcher.resources.requests.memory=$AIRBYTE_LAUNCHER_MEMORY_REQUEST \
+                --set airbyte-abctl-workload-launcher.resources.limits.memory=$AIRBYTE_LAUNCHER_MEMORY_LIMIT \
+            2>/dev/null || \
+            abctl local install \
+                --port '$AIRBYTE_PORT' \
+                --insecure-cookies \
+                --set airbyte-abctl-worker.resources.requests.memory=$AIRBYTE_WORKER_MEMORY_REQUEST \
+                --set airbyte-abctl-worker.resources.limits.memory=$AIRBYTE_WORKER_MEMORY_LIMIT \
+                --set airbyte-abctl-workload-launcher.resources.requests.memory=$AIRBYTE_LAUNCHER_MEMORY_REQUEST \
+                --set airbyte-abctl-workload-launcher.resources.limits.memory=$AIRBYTE_LAUNCHER_MEMORY_LIMIT
+        "
     else
         log_error "No hay acceso operativo a Docker para ejecutar abctl."
         return 1
