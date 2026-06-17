@@ -435,7 +435,7 @@ if run_docker ps --format '{{.Names}}' 2>/dev/null | grep -q 'airbyte-abctl'; th
             run_abctl local uninstall || true
             
             log_info "Limpiando archivos de configuración y datos..."
-            sudo rm -rf ~/.airbyte || true
+            sudo rm -rf ~/.airbyte/abctl/data || true
             
             log_info "Esperando a que se complete la desinstalación..."
             sleep 5
