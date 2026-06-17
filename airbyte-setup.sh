@@ -516,12 +516,7 @@ EOF
         return 1
     fi
 
-    # Parche forzoso de recursos
-    log_info "Aplicando ajustes de recursos mediante parches de Kubernetes..."
-    sleep 10
-    run_abctl local kubectl patch deployment airbyte-abctl-worker -n airbyte-abctl -p '{"spec":{"template":{"spec":{"containers":[{"name":"worker","resources":{"limits":{"memory":"'"$AIRBYTE_WORKER_MEMORY_LIMIT"'","cpu":"'"$AIRBYTE_WORKER_CPU_LIMIT"'"},"requests":{"memory":"'"$AIRBYTE_WORKER_MEMORY_REQUEST"'","cpu":"'"$AIRBYTE_WORKER_CPU_REQUEST"'"}}}]}}}}'
-    run_abctl local kubectl patch deployment airbyte-abctl-workload-launcher -n airbyte-abctl -p '{"spec":{"template":{"spec":{"containers":[{"name":"workload-launcher","resources":{"limits":{"memory":"'"$AIRBYTE_LAUNCHER_MEMORY_LIMIT"'","cpu":"'"$AIRBYTE_LAUNCHER_CPU_LIMIT"'"},"requests":{"memory":"'"$AIRBYTE_LAUNCHER_MEMORY_REQUEST"'","cpu":"'"$AIRBYTE_LAUNCHER_CPU_REQUEST"'"}}}]}}}}'
-    # Limpieza archivo temporal
+   # Limpieza archivo temporal
     rm -f "$VALUES_FILE"
 }
 
