@@ -513,12 +513,13 @@ apply_resource_limits() {
             "requests": {"cpu": "'"$AIRBYTE_LAUNCHER_CPU_REQUEST"'", "memory": "'"$AIRBYTE_LAUNCHER_MEMORY_REQUEST"'"}
         }}
     ]'
-    
-    log_success "Límites de recursos aplicados con éxito."
 }
 
 install_airbyte
 log_success "Airbyte Core instalado correctamente."
+
+apply_resource_limits
+log_success "Límites de recursos aplicados con éxito."
 
 # -------------------------------
 # 6. Mostrar credenciales de Airbyte
