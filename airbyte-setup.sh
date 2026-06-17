@@ -471,12 +471,38 @@ install_airbyte() {
     export BROWSER=echo
     export _JAVA_OPTIONS="-Xmx3g"
 
+    # Definir el archivo de valores temporal para configuración de recursos
+    local VALUES_FILE
+    VALUES_FILE=$(mktemp /tmp/airbyte-values.XXXXXX.yaml)
+
+    # Crear el archivo YAML con los recursos deseados
+    cat <<EOF > "$VALUES_FILE"
+airbyte:
+  worker:
+    resources:
+      requests:
+        memory: "$AIRBYTE_WORKER_MEMORY_REQUEST"
+        cpu: "$AIRBYTE_WORKER_CPU_REQUEST"
+      limits:
+        memory: "$AIRBYTE_WORKER_MEMORY_LIMIT"
+        cpu: "$AIRBYTE_WORKER_CPU_LIMIT"
+  workloadLauncher:
+    resources:
+      requests:
+        memory: "$AIRBYTE_LAUNCHER_MEMORY_REQUEST"
+        cpu: "$AIRBYTE_LAUNCHER_CPU_REQUEST"
+      limits:
+        memory: "$AIRBYTE_LAUNCHER_MEMORY_LIMIT"
+        cpu: "$AIRBYTE_LAUNCHER_CPU_LIMIT"
+EOF
+
     # Definición del comando de instalación
     do_install() {
         abctl local install \
             --no-browser \
             --port "$AIRBYTE_PORT" \
-            --insecure-cookies
+            --insecure-cookies \
+            --values "$VALUES_FILE"
     }
 
     if run_docker ps &> /dev/null; then
