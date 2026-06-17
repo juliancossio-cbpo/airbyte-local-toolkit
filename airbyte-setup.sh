@@ -213,19 +213,19 @@ is_port_available() {
     return 0
 }
 
-select_airbyte_port() {
-    local candidate
-    local candidates=("$AIRBYTE_PORT" 8000 18080 19080 28080 38080 48080)
+# select_airbyte_port() {
+#     local candidate
+#     local candidates=("$AIRBYTE_PORT" 8000 18080 19080 28080 38080 48080)
 
-    for candidate in "${candidates[@]}"; do
-        if is_port_available "$candidate"; then
-            AIRBYTE_PORT="$candidate"
-            return 0
-        fi
-    done
+#     for candidate in "${candidates[@]}"; do
+#         if is_port_available "$candidate"; then
+#             AIRBYTE_PORT="$candidate"
+#             return 0
+#         fi
+#     done
 
-    return 1
-}
+#     return 1
+# }
 
 save_airbyte_port() {
     mkdir -p "$HOME/.airbyte/abctl"
@@ -435,7 +435,7 @@ if run_docker ps --format '{{.Names}}' 2>/dev/null | grep -q 'airbyte-abctl'; th
             run_abctl local uninstall || true
             
             log_info "Limpiando archivos de configuración y datos..."
-            sudo rm -rf ~/.airbyte/abctl/data || true
+            sudo rm -rf ~/.airbyte || true
             
             log_info "Esperando a que se complete la desinstalación..."
             sleep 5
@@ -459,10 +459,10 @@ fi
 
 log_info "Instalando Airbyte Core en el entorno local..."
 log_info "Este proceso puede tardar varios minutos..."
-if ! select_airbyte_port; then
-    log_error "No se encontró un puerto libre para Airbyte. Libera $AIRBYTE_PORT o un puerto alterno y vuelve a intentarlo."
-    exit 1
-fi
+# if ! select_airbyte_port; then
+#     log_error "No se encontró un puerto libre para Airbyte. Libera $AIRBYTE_PORT o un puerto alterno y vuelve a intentarlo."
+#     exit 1
+# fi
 
 log_info "Puerto de acceso seleccionado: $AIRBYTE_PORT"
 save_airbyte_port
