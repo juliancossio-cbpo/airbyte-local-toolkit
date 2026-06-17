@@ -520,32 +520,32 @@ EOF
     rm -f "$VALUES_FILE"
 }
 
-# apply_resource_limits() {
-#     log_info "Aplicando límites de recursos en el clúster..."
-#     sleep 10
+apply_resource_limits() {
+    log_info "Aplicando límites de recursos en el clúster..."
+    sleep 10
     
-#     # Parche para el worker (usando nombre real: airbyte-worker-container)
-#     docker exec airbyte-abctl-control-plane kubectl patch deployment airbyte-abctl-worker -n airbyte-abctl --type='json' -p='[
-#         {"op": "replace", "path": "/spec/template/spec/containers/0/resources", "value": {
-#             "limits": {"cpu": "'"$AIRBYTE_WORKER_CPU_LIMIT"'", "memory": "'"$AIRBYTE_WORKER_MEMORY_LIMIT"'"},
-#             "requests": {"cpu": "'"$AIRBYTE_WORKER_CPU_REQUEST"'", "memory": "'"$AIRBYTE_WORKER_MEMORY_REQUEST"'"}
-#         }}
-#     ]'
+    # Parche para el worker (usando nombre real: airbyte-worker-container)
+    docker exec airbyte-abctl-control-plane kubectl patch deployment airbyte-abctl-worker -n airbyte-abctl --type='json' -p='[
+        {"op": "replace", "path": "/spec/template/spec/containers/0/resources", "value": {
+            "limits": {"cpu": "'"$AIRBYTE_WORKER_CPU_LIMIT"'", "memory": "'"$AIRBYTE_WORKER_MEMORY_LIMIT"'"},
+            "requests": {"cpu": "'"$AIRBYTE_WORKER_CPU_REQUEST"'", "memory": "'"$AIRBYTE_WORKER_MEMORY_REQUEST"'"}
+        }}
+    ]'
 
-#     # Parche para el launcher (usando nombre real: airbyte-workload-launcher-container)
-#     docker exec airbyte-abctl-control-plane kubectl patch deployment airbyte-abctl-workload-launcher -n airbyte-abctl --type='json' -p='[
-#         {"op": "replace", "path": "/spec/template/spec/containers/0/resources", "value": {
-#             "limits": {"cpu": "'"$AIRBYTE_LAUNCHER_CPU_LIMIT"'", "memory": "'"$AIRBYTE_LAUNCHER_MEMORY_LIMIT"'"},
-#             "requests": {"cpu": "'"$AIRBYTE_LAUNCHER_CPU_REQUEST"'", "memory": "'"$AIRBYTE_LAUNCHER_MEMORY_REQUEST"'"}
-#         }}
-#     ]'
-# }
+    # Parche para el launcher (usando nombre real: airbyte-workload-launcher-container)
+    docker exec airbyte-abctl-control-plane kubectl patch deployment airbyte-abctl-workload-launcher -n airbyte-abctl --type='json' -p='[
+        {"op": "replace", "path": "/spec/template/spec/containers/0/resources", "value": {
+            "limits": {"cpu": "'"$AIRBYTE_LAUNCHER_CPU_LIMIT"'", "memory": "'"$AIRBYTE_LAUNCHER_MEMORY_LIMIT"'"},
+            "requests": {"cpu": "'"$AIRBYTE_LAUNCHER_CPU_REQUEST"'", "memory": "'"$AIRBYTE_LAUNCHER_MEMORY_REQUEST"'"}
+        }}
+    ]'
+}
 
 install_airbyte
 log_success "Airbyte Core instalado correctamente."
 
-# apply_resource_limits
-# log_success "Límites de recursos aplicados con éxito."
+apply_resource_limits
+log_success "Límites de recursos aplicados con éxito."
 
 # -------------------------------
 # 6. Mostrar credenciales de Airbyte
