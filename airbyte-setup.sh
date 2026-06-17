@@ -469,7 +469,7 @@ save_airbyte_port
 
 install_airbyte() {
     export BROWSER=echo
-    export _JAVA_OPTIONS="-Xmx14g"
+    export _JAVA_OPTIONS="-Xmx4g"
 
     # Definición del comando de instalación
     do_install() {
