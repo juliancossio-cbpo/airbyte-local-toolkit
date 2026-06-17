@@ -486,7 +486,7 @@ airbyte:
       limits:
         memory: "$AIRBYTE_WORKER_MEMORY_LIMIT"
         cpu: "$AIRBYTE_WORKER_CPU_LIMIT"
-  workload-launcher:
+  workloadLauncher:
     resources:
       requests:
         memory: "$AIRBYTE_LAUNCHER_MEMORY_REQUEST"
